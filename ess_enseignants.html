@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Synthèse ESS — Enseignants</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <style>
+    :root {
+      --navy:   #1c3650;
+      --teal:   #2a6478;
+      --gold:   #b8924a;
+      --cream:  #f7f4ee;
+      --white:  #ffffff;
+      --muted:  #7a8e9a;
+      --border: #d6cfc4;
+      --success:#2e7d5e;
+      --error:  #c0392b;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--navy);
+      min-height: 100vh;
+      padding: 0 0 80px;
+    }
+    header {
+      background: var(--navy);
+      padding: 36px 40px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0; height: 4px;
+      background: linear-gradient(90deg, var(--gold), transparent 70%);
+    }
+    header .badge {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--white);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      color: var(--white);
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    header p {
+      color: rgba(255,255,255,0.6);
+      font-size: 0.9rem;
+      margin-top: 8px;
+      font-weight: 300;
+    }
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 36px 20px 0;
+    }
+    .card {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 32px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 16px rgba(28,54,80,0.06);
+      transition: box-shadow .2s;
+    }
+    .card:focus-within { box-shadow: 0 4px 24px rgba(28,54,80,0.12); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .card-icon {
+      width: 38px; height: 38px;
+      background: #eef3f6;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .card h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      color: var(--navy);
+      font-weight: 700;
+    }
+    .card-num {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 8px 0 28px;
+    }
+    .section-divider span {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .section-divider hr { flex: 1; border: none; border-top: 1px solid var(--border); }
+    .field { margin-bottom: 20px; }
+    .field:last-child { margin-bottom: 0; }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: 7px;
+      letter-spacing: 0.3px;
+    }
+    label .req { color: var(--gold); margin-left: 3px; }
+    .hint {
+      font-size: 0.77rem;
+      color: var(--muted);
+      font-style: italic;
+      margin-bottom: 9px;
+      line-height: 1.5;
+      padding: 8px 12px;
+      background: #f0f4f7;
+      border-left: 3px solid var(--teal);
+      border-radius: 0 6px 6px 0;
+    }
+    .hint strong { font-style: normal; font-weight: 600; color: var(--teal); display: block; margin-bottom: 3px; }
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      color: var(--navy);
+      background: var(--white);
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+    input[type="text"]:focus, textarea:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(42,100,120,0.12);
+    }
+    input[type="text"].invalid {
+      border-color: var(--error);
+      box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
+    }
+    textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 540px) { .two-col { grid-template-columns: 1fr; } }
+    .actions { text-align: center; padding: 10px 0 0; }
+    .btn-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--navy), var(--teal));
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 16px 36px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 6px 24px rgba(28,54,80,0.25);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn-main:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(28,54,80,0.32); }
+    .btn-main:active { transform: translateY(0); }
+    .btn-main:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-reset {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 1.5px solid var(--border);
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      padding: 10px 22px;
+      border-radius: 50px;
+      cursor: pointer;
+      margin-top: 14px;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-reset:hover { border-color: var(--navy); color: var(--navy); }
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--success);
+      color: white;
+      padding: 14px 28px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+      z-index: 999;
+      display: flex; align-items: center; gap: 8px;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #errorBox {
+      display: none;
+      background: #fdf0ef;
+      border: 1.5px solid var(--error);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+      color: var(--error);
+    }
+    #errorBox.show { display: block; }
+    footer {
+      text-align: center;
+      padding: 32px 20px 0;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="badge">Équipe de Suivi de Scolarisation</div>
+  <h1>Synthèse ESS<br>Enseignants</h1>
+  <p>Merci de bien vouloir compléter ce questionnaire en vue de la réunion ESS de notre élève.</p>
+</header>
+
+<main>
+  <form id="essForm" novalidate>
+
+    <div class="section-divider">
+      <span>Section 1 — Élève &amp; enseignant</span><hr>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🎓</div>
+        <div>
+          <div class="card-num">Informations générales</div>
+          <h2>Identité de l'élève</h2>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label for="nomEleve">NOM et Prénom de l'élève <span class="req">*</span></label>
+          <input type="text" id="nomEleve" placeholder="Nom et prénom" required>
+        </div>
+        <div class="field">
+          <label for="classe">Classe <span class="req">*</span></label>
+          <input type="text" id="classe" placeholder="ex. : 2de Pro MRC" required>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🏫</div>
+        <div>
+          <div class="card-num">Enseignant</div>
+          <h2>Vos informations</h2>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label for="nomEnseignant">NOM et Prénom <span class="req">*</span></label>
+          <input type="text" id="nomEnseignant" placeholder="Votre nom complet" required>
+        </div>
+        <div class="field">
+          <label for="discipline">Discipline enseignée <span class="req">*</span></label>
+          <input type="text" id="discipline" placeholder="ex. : Commerce-vente" required>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-divider">
+      <span>Section 2 — Bilan de l'élève</span><hr>
+    </div>
+
+    <p style="font-size:0.85rem; color:var(--muted); margin-bottom:22px; line-height:1.6;">
+      Merci d'indiquer les <strong>difficultés et/ou les réussites</strong> de l'élève.
+      La liste des compétences est <em>non exhaustive</em>.
+    </p>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🗣️</div>
+        <div>
+          <div class="card-num">Compétence 1</div>
+          <h2>Langage oral, expression &amp; compréhension</h2>
+        </div>
+      </div>
+      <div class="hint">
+        <strong>Points à observer</strong>
+        Prise de parole · Qualité de l'expression orale · Compréhension orale des consignes
+      </div>
+      <textarea id="langageOral" placeholder="Décrivez les difficultés et/ou les réussites de l'élève…"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">✍️</div>
+        <div>
+          <div class="card-num">Compétence 2</div>
+          <h2>Langage écrit : lecture, compréhension, production d'écrits</h2>
+        </div>
+      </div>
+      <div class="hint">
+        <strong>Points à observer</strong>
+        Compréhension écrite · Capacité à analyser un texte / des documents · Qualité de l'expression écrite · Orthographe et syntaxe · Graphisme (lenteur, lisibilité…)
+      </div>
+      <textarea id="langageEcrit" placeholder="Décrivez les difficultés et/ou les réussites de l'élève…"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📚</div>
+        <div>
+          <div class="card-num">Compétence 3</div>
+          <h2>Attitude face au travail</h2>
+        </div>
+      </div>
+      <div class="hint">
+        <strong>Points à observer</strong>
+        Compréhension des notions · Acquisition des connaissances · Intérêts et participation · Concentration / attention · Mémorisation · Implication · Organisation · Autonomie
+      </div>
+      <textarea id="attitude" placeholder="Décrivez les difficultés et/ou les réussites de l'élève…"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🤝</div>
+        <div>
+          <div class="card-num">Compétence 4</div>
+          <h2>Comportement</h2>
+        </div>
+      </div>
+      <div class="hint">
+        <strong>Points à observer</strong>
+        Avec les autres · Avec les adultes · Dans l'établissement · En situation de stage
+      </div>
+      <textarea id="comportement" placeholder="Décrivez les difficultés et/ou les réussites de l'élève…"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">⚙️</div>
+        <div>
+          <div class="card-num">Compétence 5</div>
+          <h2>Aménagements proposés</h2>
+        </div>
+      </div>
+      <textarea id="amenagements" placeholder="Listez les aménagements proposés pour cet élève…"></textarea>
+    </div>
+
+    <div id="errorBox">⚠️ Merci de renseigner le nom de l'élève, la classe, le nom de l'enseignant et la discipline.</div>
+
+    <div class="actions">
+      <button type="submit" id="btnGenerer" class="btn-main">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="12" y1="18" x2="12" y2="12"/>
+          <line x1="9" y1="15" x2="15" y2="15"/>
+        </svg>
+        Générer le document PDF
+      </button>
+      <br>
+      <button type="button" class="btn-reset" onclick="resetForm()">↺ Réinitialiser le formulaire</button>
+    </div>
+
+  </form>
+
+  <footer>Outil interne — Synthèse ESS · Aucune donnée transmise en ligne · Tout reste sur votre appareil</footer>
+</main>
+
+<div id="toast">✓ Document PDF généré avec succès !</div>
+
+<script>
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function resetForm() {
+  if (confirm('Réinitialiser le formulaire ? Toutes les saisies seront effacées.')) {
+    document.getElementById('essForm').reset();
+    document.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+    document.getElementById('errorBox').classList.remove('show');
+  }
+}
+
+document.querySelectorAll('[required]').forEach(el => {
+  el.addEventListener('input', () => {
+    if (el.value.trim()) el.classList.remove('invalid');
+  });
+});
+
+function validateForm() {
+  const required = document.querySelectorAll('[required]');
+  let valid = true;
+  required.forEach(el => {
+    if (!el.value.trim()) { el.classList.add('invalid'); valid = false; }
+    else el.classList.remove('invalid');
+  });
+  document.getElementById('errorBox').classList.toggle('show', !valid);
+  return valid;
+}
+
+const svgIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>`;
+
+document.getElementById('essForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!validateForm()) return;
+
+  const btn = document.getElementById('btnGenerer');
+  btn.disabled = true;
+  btn.innerHTML = 'Génération en cours…';
+
+  const get = id => (document.getElementById(id).value || '').trim();
+
+  const data = {
+    nomEleve:      get('nomEleve'),
+    classe:        get('classe'),
+    date:          new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }),
+    nomEnseignant: get('nomEnseignant'),
+    discipline:    get('discipline'),
+    langageOral:   get('langageOral'),
+    langageEcrit:  get('langageEcrit'),
+    attitude:      get('attitude'),
+    comportement:  get('comportement'),
+    amenagements:  get('amenagements'),
+  };
+
+  try {
+    generatePDF(data);
+    showToast();
+  } catch (err) {
+    console.error('Erreur PDF :', err);
+    alert('Erreur lors de la génération : ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = svgIcon + ' Générer le document PDF';
+  }
+});
+
+function generatePDF(d) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const MARGIN_L = 20;
+  const MARGIN_R = 20;
+  const PAGE_W   = 210;
+  const PAGE_H   = 297;
+  const CONTENT_W = PAGE_W - MARGIN_L - MARGIN_R;
+
+  const NAVY = [28,  54,  80];
+  const TEAL = [42, 100, 120];
+  const GOLD = [184, 146, 74];
+  const GREY = [130, 130, 130];
+  const LGREY= [240, 244, 247];
+  const WHITE= [255, 255, 255];
+
+  let y = 0; // curseur vertical
+
+  // ── Nouvelle page si nécessaire ──
+  function checkPage(needed) {
+    if (y + needed > PAGE_H - 18) {
+      doc.addPage();
+      y = 18;
+    }
+  }
+
+  // ── Bandeau d'en-tête ──
+  doc.setFillColor(...NAVY);
+  doc.rect(0, 0, PAGE_W, 42, 'F');
+
+  // Trait doré en bas du bandeau
+  doc.setFillColor(...GOLD);
+  doc.rect(0, 40, PAGE_W * 0.6, 2, 'F');
+
+  // Badge
+  doc.setFillColor(...GOLD);
+  doc.roundedRect(MARGIN_L, 7, 72, 6, 1.5, 1.5, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.5);
+  doc.setTextColor(...WHITE);
+  doc.text('ÉQUIPE DE SUIVI DE SCOLARISATION', MARGIN_L + 3, 11.5);
+
+  // Titre
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(...WHITE);
+  doc.text('Synthèse ESS — Enseignants', MARGIN_L, 25);
+
+  // Sous-titre
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(200, 210, 220);
+  doc.text('Merci de compléter ce questionnaire en vue de la réunion ESS de notre élève.', MARGIN_L, 33);
+
+  y = 52;
+
+  // ── Bloc infos générales ──
+  // Fond léger
+  doc.setFillColor(...LGREY);
+  doc.roundedRect(MARGIN_L, y, CONTENT_W, 38, 3, 3, 'F');
+
+  // Grille 2 colonnes
+  const col = CONTENT_W / 2 - 4;
+  const rows = [
+    [['Élève', d.nomEleve],         ['Classe', d.classe]],
+    [['Enseignant', d.nomEnseignant], ['Discipline', d.discipline]],
+    [['Date', d.date],              null],
+  ];
+
+  let iy = y + 7;
+  rows.forEach(row => {
+    row.forEach((cell, ci) => {
+      if (!cell) return;
+      const cx = MARGIN_L + 4 + ci * (col + 8);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(...TEAL);
+      doc.text(cell[0].toUpperCase(), cx, iy);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(...NAVY);
+      doc.text(cell[1] || '—', cx, iy + 5);
+    });
+    iy += 13;
+  });
+
+  y += 44;
+
+  // ── Titre de section ──
+  function sectionTitle(text) {
+    checkPage(14);
+    y += 4;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...TEAL);
+    doc.text(text.toUpperCase(), MARGIN_L, y);
+    // Trait doré
+    doc.setDrawColor(...GOLD);
+    doc.setLineWidth(0.6);
+    doc.line(MARGIN_L, y + 2, MARGIN_L + CONTENT_W, y + 2);
+    y += 8;
+  }
+
+  // ── Bloc compétence ──
+  function competenceBlock(numero, titre, contenu) {
+    checkPage(22);
+
+    // Numéro + titre en gras
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(...NAVY);
+    const label = numero + '. ' + titre;
+    const labelLines = doc.splitTextToSize(label, CONTENT_W);
+    doc.text(labelLines, MARGIN_L, y);
+    y += labelLines.length * 5 + 2;
+
+    // Contenu
+    const text = (contenu || '').trim() || '—';
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(60, 60, 60);
+    const lines = doc.splitTextToSize(text, CONTENT_W - 6);
+
+    // Fond de la zone texte
+    const blockH = lines.length * 4.8 + 6;
+    checkPage(blockH + 4);
+    doc.setFillColor(250, 250, 252);
+    doc.setDrawColor(220, 225, 230);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(MARGIN_L, y - 1, CONTENT_W, blockH, 2, 2, 'FD');
+
+    // Trait teal à gauche
+    doc.setFillColor(...TEAL);
+    doc.rect(MARGIN_L, y - 1, 2, blockH, 'F');
+
+    doc.setTextColor(60, 60, 60);
+    doc.text(lines, MARGIN_L + 5, y + 3.5);
+    y += blockH + 5;
+  }
+
+  // ── Bilan ──
+  sectionTitle('Bilan de l\'élève');
+  competenceBlock('1', 'Langage oral — expression et compréhension',         d.langageOral);
+  competenceBlock('2', 'Langage écrit — lecture, compréhension, production d\'écrits', d.langageEcrit);
+  competenceBlock('3', 'Attitude face au travail',                           d.attitude);
+  competenceBlock('4', 'Comportement',                                       d.comportement);
+  competenceBlock('5', 'Aménagements proposés',                              d.amenagements);
+
+  // ── Pied de page sur toutes les pages ──
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFillColor(...NAVY);
+    doc.rect(0, PAGE_H - 10, PAGE_W, 10, 'F');
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(7);
+    doc.setTextColor(...WHITE);
+    doc.text(
+      'Généré le ' + d.date + ' — ' + d.nomEnseignant + ', ' + d.discipline,
+      MARGIN_L, PAGE_H - 3.5
+    );
+    doc.setTextColor(180, 180, 200);
+    doc.text('Page ' + i + ' / ' + totalPages, PAGE_W - MARGIN_R, PAGE_H - 3.5, { align: 'right' });
+  }
+
+  // ── Sauvegarde ──
+  const safe = s => s.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
+  doc.save('ESS_' + safe(d.nomEleve) + '_' + safe(d.nomEnseignant) + '.pdf');
+}
+</script>
+</body>
+</html>
